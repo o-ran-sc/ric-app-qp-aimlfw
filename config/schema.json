@@ -1,0 +1,840 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "version": {
+            "type": "string"
+        },
+        "annotations": {
+            "type": "object",
+            "properties": {
+                "linkerd.io/inject": {
+                    "type": "string"
+                },
+                "prometheus.io/port": {
+                    "type": "string"
+                },
+                "prometheus.io/xapp_scrape": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "linkerd.io/inject",
+                "prometheus.io/port",
+                "prometheus.io/xapp_scrape"
+            ]
+        },
+        "containers": {
+            "type": "array",
+            "items": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "image": {
+                            "type": "object",
+                            "properties": {
+                                "registry": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "tag": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "registry",
+                                "name",
+                                "tag"
+                            ]
+                        },
+                        "args": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "command": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "image",
+                        "args",
+                        "command"
+                    ]
+                }
+            ]
+        },
+        "livenessProbe": {
+            "type": "object",
+            "properties": {
+                "httpGet": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string"
+                        },
+                        "port": {
+                            "type": "integer"
+                        }
+                    },
+                    "required": [
+                        "path",
+                        "port"
+                    ]
+                },
+                "initialDelaySeconds": {
+                    "type": "integer"
+                },
+                "periodSeconds": {
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "httpGet",
+                "initialDelaySeconds",
+                "periodSeconds"
+            ]
+        },
+        "readinessProbe": {
+            "type": "object",
+            "properties": {
+                "httpGet": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string"
+                        },
+                        "port": {
+                            "type": "integer"
+                        }
+                    },
+                    "required": [
+                        "path",
+                        "port"
+                    ]
+                },
+                "initialDelaySeconds": {
+                    "type": "integer"
+                },
+                "periodSeconds": {
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "httpGet",
+                "initialDelaySeconds",
+                "periodSeconds"
+            ]
+        },
+        "appenv": {
+            "type": "object",
+            "properties": {
+                "PredictClient": {
+                    "type": "string"
+                },
+                "InfluxdbClient": {
+                    "type": "string"
+                },
+                "IntelClient": {
+                    "type": "string"
+                },
+                "IntelOvmsClient": {
+                    "type": "string"
+                },
+                "IntelOpenVinoClient": {
+                    "type": "string"
+                },
+                "IntelPipelineClient": {
+                    "type": "string"
+                },
+                "IntelNumUEtoActor": {
+                    "type": "string"
+                },
+                "EnablePipeline": {
+                    "type": "string"
+                },
+                "EnableBatch": {
+                    "type": "string"
+                },
+                "EnableModelPipeline": {
+                    "type": "string"
+                },
+                "ServerType": {
+                    "type": "string"
+                },
+                "pathofKubeConfig": {
+                    "type": "string"
+                },
+                "ricMsgBufChanLen": {
+                    "type": "string"
+                },
+                "ricIndBufChanLen": {
+                    "type": "string"
+                },
+                "ricIndWorkerNum": {
+                    "type": "string"
+                },
+                "ricIndMaxTimeSlot": {
+                    "type": "string"
+                },
+                "GOGC": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "PredictClient",
+                "InfluxdbClient",
+                "IntelClient",
+                "IntelOvmsClient",
+                "IntelOpenVinoClient",
+                "IntelPipelineClient",
+                "IntelNumUEtoActor",
+                "EnablePipeline",
+                "EnableBatch",
+                "EnableModelPipeline",
+                "ServerType",
+                "pathofKubeConfig",
+                "ricMsgBufChanLen",
+                "ricIndBufChanLen",
+                "ricIndWorkerNum",
+                "ricIndMaxTimeSlot",
+                "GOGC"
+            ]
+        },
+        "logger": {
+            "type": "object",
+            "properties": {
+                "level": {
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "level"
+            ]
+        },
+        "messaging": {
+            "type": "object",
+            "properties": {
+                "ports": {
+                    "type": "array",
+                    "items": [
+                        {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "container": {
+                                    "type": "string"
+                                },
+                                "port": {
+                                    "type": "integer"
+                                },
+                                "rxMessages": {
+                                    "type": "array",
+                                    "items": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "txMessages": {
+                                    "type": "array",
+                                    "items": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "string"
+                                        }
+                                    ]
+                                },
+                                "policies": {
+                                    "type": "array",
+                                    "items": [
+                                        {
+                                            "type": "integer"
+                                        }
+                                    ]
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "name",
+                                "container",
+                                "port",
+                                "rxMessages",
+                                "txMessages",
+                                "policies",
+                                "description"
+                            ]
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "container": {
+                                    "type": "string"
+                                },
+                                "port": {
+                                    "type": "integer"
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "name",
+                                "container",
+                                "port",
+                                "description"
+                            ]
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "container": {
+                                    "type": "string"
+                                },
+                                "port": {
+                                    "type": "integer"
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "name",
+                                "container",
+                                "port",
+                                "description"
+                            ]
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "container": {
+                                    "type": "string"
+                                },
+                                "port": {
+                                    "type": "integer"
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "name",
+                                "container",
+                                "port",
+                                "description"
+                            ]
+                        }
+                    ]
+                }
+            },
+            "required": [
+                "ports"
+            ]
+        },
+        "rmr": {
+            "type": "object",
+            "properties": {
+                "protPort": {
+                    "type": "string"
+                },
+                "maxSize": {
+                    "type": "integer"
+                },
+                "numWorkers": {
+                    "type": "integer"
+                },
+                "txMessages": {
+                    "type": "array",
+                    "items": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ]
+                },
+                "rxMessages": {
+                    "type": "array",
+                    "items": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ]
+                },
+                "policies": {
+                    "type": "array",
+                    "items": [
+                        {
+                            "type": "integer"
+                        }
+                    ]
+                }
+            },
+            "required": [
+                "protPort",
+                "maxSize",
+                "numWorkers",
+                "txMessages",
+                "rxMessages",
+                "policies"
+            ]
+        },
+        "metrics": {
+            "type": "array",
+            "items": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "objectName": {
+                            "type": "string"
+                        },
+                        "objectInstance": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "objectName",
+                        "objectInstance",
+                        "name",
+                        "type",
+                        "description"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "objectName": {
+                            "type": "string"
+                        },
+                        "objectInstance": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "objectName",
+                        "objectInstance",
+                        "name",
+                        "type",
+                        "description"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "objectName": {
+                            "type": "string"
+                        },
+                        "objectInstance": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "objectName",
+                        "objectInstance",
+                        "name",
+                        "type",
+                        "description"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "objectName": {
+                            "type": "string"
+                        },
+                        "objectInstance": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "objectName",
+                        "objectInstance",
+                        "name",
+                        "type",
+                        "description"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "objectName": {
+                            "type": "string"
+                        },
+                        "objectInstance": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "objectName",
+                        "objectInstance",
+                        "name",
+                        "type",
+                        "description"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "objectName": {
+                            "type": "string"
+                        },
+                        "objectInstance": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "objectName",
+                        "objectInstance",
+                        "name",
+                        "type",
+                        "description"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "objectName": {
+                            "type": "string"
+                        },
+                        "objectInstance": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "objectName",
+                        "objectInstance",
+                        "name",
+                        "type",
+                        "description"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "objectName": {
+                            "type": "string"
+                        },
+                        "objectInstance": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "objectName",
+                        "objectInstance",
+                        "name",
+                        "type",
+                        "description"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "objectName": {
+                            "type": "string"
+                        },
+                        "objectInstance": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "objectName",
+                        "objectInstance",
+                        "name",
+                        "type",
+                        "description"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "objectName": {
+                            "type": "string"
+                        },
+                        "objectInstance": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "objectName",
+                        "objectInstance",
+                        "name",
+                        "type",
+                        "description"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "objectName": {
+                            "type": "string"
+                        },
+                        "objectInstance": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "objectName",
+                        "objectInstance",
+                        "name",
+                        "type",
+                        "description"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "objectName": {
+                            "type": "string"
+                        },
+                        "objectInstance": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "objectName",
+                        "objectInstance",
+                        "name",
+                        "type",
+                        "description"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "objectName": {
+                            "type": "string"
+                        },
+                        "objectInstance": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "objectName",
+                        "objectInstance",
+                        "name",
+                        "type",
+                        "description"
+                    ]
+                }
+            ]
+        }
+    },
+    "required": [
+        "name",
+        "version",
+        "annotations",
+        "containers",
+        "livenessProbe",
+        "readinessProbe",
+        "appenv",
+        "logger",
+        "messaging",
+        "rmr",
+        "metrics"
+    ]
+}
