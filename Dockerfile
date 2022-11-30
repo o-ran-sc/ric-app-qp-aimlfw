@@ -52,5 +52,5 @@ RUN apt update && apt install -y \
 COPY --from=builder /opt/qoe-aiml-assist/build/qoe-aiml-assist .
 COPY --from=builder /usr/local/include /usr/local/include
 COPY --from=builder /usr/local/lib /usr/local/lib
-COPY --from=builder /opt/qoe-aiml-assist/config/* /opt/
+COPY --from=builder /opt/qoe-aiml-assist/config/* /opt/ric/config/
 RUN ldconfig

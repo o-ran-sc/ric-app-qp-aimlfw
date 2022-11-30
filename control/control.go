@@ -36,9 +36,13 @@ const (
 	DEFAULT_MSG_BUF_CHAN_LEN int = 256
 	SIGNITURE_NAME               = "serving_default"
 
-	ENV_RIC_MSG_BUF_CHAN_LEN = "ricMsgBufChanLen"
-	ENV_INFLUX_URL           = "INFLUX_URL"
-	ENV_WAIT_SDL             = "db.waitForSdl"
+	ENV_RIC_MSG_BUF_CHAN_LEN   = "ricMsgBufChanLen"
+	ENV_INFLUX_URL             = "INFLUX_URL"
+	ENV_WAIT_SDL               = "db.waitForSdl"
+	ENV_MLXAPP_REQ_HEADER_HOST = "MLXAPP_REQ_HEADER_HOST"
+	ENV_MLXAPP_HOST            = "MLXAPP_HOST"
+	ENV_MLXAPP_PORT            = "MLXAPP_PORT"
+	ENV_MLXAPP_REQ_URL         = "MLXAPP_REQ_URL"
 )
 
 type Control struct {
@@ -86,11 +90,19 @@ func (c *Control) handleRequestPrediction(ranName string, msg *xapp.RMRParams) {
 		return
 	}
 	ueid := predictRequest.UEPredictionSet[0]
+	xapp.Logger.Info("requested UEPredictionSet = %s", ueid)
 
-	cellMetricsEntries, err := c.influxClient.RetrieveCellMetrics(ueid)
+	cellMetricsEntries, err := c.influxClient.RetrieveCellMetrics()
 	if err != nil {
 		xapp.Logger.Error("failed to RetrieveCellMetrics")
+		return
 	}
+
+	if cellMetricsEntries == nil || len(cellMetricsEntries) == 0 {
+		xapp.Logger.Error("CellMetrics is null !")
+		return
+	}
+
 	qoePrectionInput := c.makeRequestPredictionMsg(cellMetricsEntries)
 	jsonbytes, err := json.Marshal(qoePrectionInput)
 	if err != nil {
@@ -101,13 +113,13 @@ func (c *Control) handleRequestPrediction(ranName string, msg *xapp.RMRParams) {
 	client := resty.New()
 	resp, err := client.R().
 		SetHeader("Content-Type", "application/x-www-form-urlencoded").
-		SetHeader("Host", os.Getenv("MLXAPP_REQ_HEADER_HOST")).
+		SetHeader("Host", os.Getenv(ENV_MLXAPP_REQ_HEADER_HOST)).
 		EnableTrace().
 		SetBody(jsonbytes).
-		Post(fmt.Sprintf("%s:%s/%s", os.Getenv("MLXAPP_HOST"), os.Getenv("MLXAPP_PORT"), os.Getenv("MLXAPP_REQ_URL")))
+		Post(fmt.Sprintf("%s:%s/%s", os.Getenv(ENV_MLXAPP_HOST), os.Getenv(ENV_MLXAPP_PORT), os.Getenv(ENV_MLXAPP_REQ_URL)))
 
 	if err != nil || resp == nil || resp.StatusCode() != http.StatusOK {
-		xapp.Logger.Error("failed to POST : err = %s, resp = %s, code = %s", err, resp, resp.StatusCode())
+		xapp.Logger.Error("failed to POST : err = %s, resp = %s, code = %s, sendmsg = %s", err, resp, resp.StatusCode(), qoePrectionInput)
 		return
 	}
 
@@ -141,8 +153,10 @@ func (c *Control) controlLoop() {
 
 func (c *Control) sendPredictionResult(msg *xapp.RMRParams, respBody []byte) {
 	msg.Mtype = xapp.TS_QOE_PREDICTION
+	msg.PayloadLen = len(respBody)
 	msg.Payload = respBody
-	xapp.Rmr.SendRts(msg)
+	ret := xapp.Rmr.SendRts(msg)
+	xapp.Logger.Info("result of SendPredictionResult = %s", ret)
 }
 
 func (c *Control) Consume(msg *xapp.RMRParams) (err error) {
