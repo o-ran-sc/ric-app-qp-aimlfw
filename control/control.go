@@ -30,6 +30,7 @@ import (
 	"gerrit.o-ran-sc.org/r/qp-aiml/influx"
 	"gerrit.o-ran-sc.org/r/ric-plt/xapp-frame/pkg/xapp"
 	"github.com/go-resty/resty/v2"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -39,17 +40,43 @@ const (
 	ENV_RIC_MSG_BUF_CHAN_LEN = "ricMsgBufChanLen"
 	ENV_INFLUX_URL           = "INFLUX_URL"
 	ENV_WAIT_SDL             = "db.waitForSdl"
+
+	ENV_MLXAPP_PREFIX          = "MLXAPP"
+	ENV_MLXAPP_REQ_HEADER_HOST = "HEADERHOST"
+	ENV_MLXAPP_HOST            = "HOST"
+	ENV_MLXAPP_PORT            = "PORT"
+	ENV_MLXAPP_REQ_URL         = "REQURL"
 )
 
 type Control struct {
-	influxClient influx.InfluxClient
-	rcChan       chan *xapp.RMRParams
+	influxClient  influx.InfluxClient
+	rcChan        chan *xapp.RMRParams
+	mlxAppConfigs MLxAppConfigs
+}
+
+type MLxAppConfigs struct {
+	HeaderHost string
+	Host       string
+	Port       string
+	ReqUrl     string
 }
 
 func NewControl() Control {
 	influxClient := influx.CreateInfluxClient()
 	ricMsgBufChanLen, _ := getEnvAndSetInt(DEFAULT_MSG_BUF_CHAN_LEN, ENV_RIC_MSG_BUF_CHAN_LEN)
-	return Control{influxClient, make(chan *xapp.RMRParams, ricMsgBufChanLen)}
+
+	var mlxAppConfigs MLxAppConfigs
+	err := viper.Unmarshal(&mlxAppConfigs)
+	if err != nil {
+		xapp.Logger.Error("failed to Unmarshal MLxAppConfigs")
+	}
+	out, err := json.Marshal(mlxAppConfigs)
+	if err != nil {
+		xapp.Logger.Error("failed to json.Marshal MLxAppConfigs")
+	}
+	xapp.Logger.Debug("MLxAppConfigs : %s", out)
+
+	return Control{influxClient, make(chan *xapp.RMRParams, ricMsgBufChanLen), mlxAppConfigs}
 }
 
 func getEnvAndSetInt(val int, envKey string) (int, bool) {
@@ -86,11 +113,19 @@ func (c *Control) handleRequestPrediction(ranName string, msg *xapp.RMRParams) {
 		return
 	}
 	ueid := predictRequest.UEPredictionSet[0]
+	xapp.Logger.Info("requested UEPredictionSet = %s", ueid)
 
-	cellMetricsEntries, err := c.influxClient.RetrieveCellMetrics(ueid)
+	cellMetricsEntries, err := c.influxClient.RetrieveCellMetrics()
 	if err != nil {
 		xapp.Logger.Error("failed to RetrieveCellMetrics")
+		return
 	}
+
+	if cellMetricsEntries == nil || len(cellMetricsEntries) == 0 {
+		xapp.Logger.Error("CellMetrics is null !")
+		return
+	}
+
 	qoePrectionInput := c.makeRequestPredictionMsg(cellMetricsEntries)
 	jsonbytes, err := json.Marshal(qoePrectionInput)
 	if err != nil {
@@ -101,13 +136,13 @@ func (c *Control) handleRequestPrediction(ranName string, msg *xapp.RMRParams) {
 	client := resty.New()
 	resp, err := client.R().
 		SetHeader("Content-Type", "application/x-www-form-urlencoded").
-		SetHeader("Host", os.Getenv("MLXAPP_REQ_HEADER_HOST")).
+		SetHeader("Host", c.mlxAppConfigs.HeaderHost).
 		EnableTrace().
 		SetBody(jsonbytes).
-		Post(fmt.Sprintf("%s:%s/%s", os.Getenv("MLXAPP_HOST"), os.Getenv("MLXAPP_PORT"), os.Getenv("MLXAPP_REQ_URL")))
+		Post(fmt.Sprintf("%s:%s/%s", c.mlxAppConfigs.Host, c.mlxAppConfigs.Port, c.mlxAppConfigs.ReqUrl))
 
 	if err != nil || resp == nil || resp.StatusCode() != http.StatusOK {
-		xapp.Logger.Error("failed to POST : err = %s, resp = %s, code = %s", err, resp, resp.StatusCode())
+		xapp.Logger.Error("failed to POST : err = %s, resp = %s, code = %s, sendmsg = %s", err, resp, resp.StatusCode(), qoePrectionInput)
 		return
 	}
 
@@ -141,8 +176,10 @@ func (c *Control) controlLoop() {
 
 func (c *Control) sendPredictionResult(msg *xapp.RMRParams, respBody []byte) {
 	msg.Mtype = xapp.TS_QOE_PREDICTION
+	msg.PayloadLen = len(respBody)
 	msg.Payload = respBody
-	xapp.Rmr.SendRts(msg)
+	ret := xapp.Rmr.SendRts(msg)
+	xapp.Logger.Info("result of SendPredictionResult = %s", ret)
 }
 
 func (c *Control) Consume(msg *xapp.RMRParams) (err error) {

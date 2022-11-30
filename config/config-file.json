@@ -40,10 +40,12 @@
         "INFLUX_TOKEN": "",
         "INFLUX_BUCKET": "aiml",
         "INFLUX_ORG": "primary",
-        "MLXAPP_REQ_HEADER_HOST": "qoe-model.kserve-test.example.com",
+        "INFLUX_QUERY_START": "-1m",
+        "INFLUX_QUERY_STOP": "",
+        "MLXAPP_HEADERHOST": "qoe-model.kserve-test.example.com",
         "MLXAPP_HOST": "",
         "MLXAPP_PORT": "3",
-        "MLXAPP_REQ_URL": "v1/models/qoe-model:predict"
+        "MLXAPP_REQURL": "v1/models/qoe-model:predict"
     },
     "logger": {
         "level": 5
@@ -52,31 +54,27 @@
         "ports": [
             {
                 "name": "http",
-                "container": "hw-go",
+                "container": "qoe-aiml-assist",
                 "port": 8080,
                 "description": "http service"
             },
             {
                 "name": "rmrroute",
-                "container": "hw-go",
+                "container": "qoe-aiml-assist",
                 "port": 4561,
-                "description": "rmr route port for hw-go xapp"
+                "description": "rmr route port for qoe-aiml-assist xapp"
             },
             {
                 "name": "rmrdata",
-                "container": "hw-go",
+                "container": "qoe-aiml-assist-go",
                 "port": 4560,
                 "rxMessages": [
-                    "RIC_SUB_RESP",
-                    "RIC_SUB_FAILURE",
-                    "RIC_SUB_DEL_RESP",
-                    "RIC_INDICATION"
+                    "RIC_HEALTH_CHECK_REQ",
+                    "TS_UE_LIST"
                 ],
                 "txMessages": [
-                    "RIC_SUB_REQ",
-                    "RIC_SUB_DEL_REQ",
-                    "RIC_SGNB_ADDITION_REQ",
-                    "RIC_SGNB_ADDITION_ACK"
+                    "RIC_HEALTH_CHECK_RESP",
+                    "TS_QOE_PREDICTION"
                 ],
                 "mtypes" : [
                     {
@@ -91,7 +89,7 @@
                 "policies": [
                     1
                 ],
-                "description": "rmr data port for hw-go"
+                "description": "rmr data port for qoe-aiml-assist-go"
             }
         ]
     },
@@ -100,15 +98,12 @@
         "maxSize": 2072,
         "numWorkers": 1,
         "txMessages": [
-            "RIC_SUB_REQ",
-            "A1_POLICY_RESP",
-            "A1_POLICY_QUERY",
-            "RIC_HEALTH_CHECK_RESP"
+            "RIC_HEALTH_CHECK_RESP",
+            "TS_QOE_PREDICTION"
         ],
         "rxMessages": [
-            "RIC_SUB_RESP",
-            "A1_POLICY_REQ",
-            "RIC_HEALTH_CHECK_REQ"
+            "RIC_HEALTH_CHECK_REQ",
+            "TS_UE_LIST"
         ],
         "policies": [
             1

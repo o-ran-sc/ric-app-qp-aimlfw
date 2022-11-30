@@ -22,6 +22,7 @@ package influx
 import (
 	"context"
 	"encoding/json"
+	"os"
 
 	"gerrit.o-ran-sc.org/r/qp-aiml/data"
 	"gerrit.o-ran-sc.org/r/ric-plt/xapp-frame/pkg/xapp"
@@ -32,6 +33,9 @@ import (
 const (
 	INFLUX_MEASUREMENT_NAME = "ricIndication_cellMetrics"
 	INFLUX_FIELD_NAME       = "Cell Metrics"
+
+	ENV_INFLUX_QUERY_START = "INFLUX_QUERY_START"
+	ENV_INFLUX_QUERY_STOP  = "INFLUX_QUERY_STOP"
 )
 
 type InfluxConfigs struct {
@@ -74,12 +78,33 @@ func CreateInfluxClient() InfluxClient {
 	}
 }
 
+func (c *InfluxClient) getQueryRange() string {
+	start := os.Getenv(ENV_INFLUX_QUERY_START)
+	stop := os.Getenv(ENV_INFLUX_QUERY_STOP)
+
+	if start == "" {
+		xapp.Logger.Error("invalid query range !")
+		return ""
+	}
+
+	if stop == "" {
+		return `|> range(start: ` + start + `)`
+	}
+	return `|> range(start: ` + start + `, stop: ` + stop + `)`
+}
+
 func (c *InfluxClient) RetrieveCellMetrics(ueid string) ([]data.CellMetricsEntry, error) {
 
 	queryApi := c.client.QueryApi(c.influx.Org)
 
+	queryRange := c.getQueryRange()
+
+	if queryRange == "" {
+		return nil, nil
+	}
+
 	query := `from(bucket:"` + c.influx.Bucket + `") 
-	|> range(start:-1d)
+	` + queryRange + `
 	|> filter(fn: (r)=>r["_measurement"] == "` + INFLUX_MEASUREMENT_NAME + `")
 	|> filter(fn: (r) => r["_field"] == "` + INFLUX_FIELD_NAME + `")`
 
@@ -93,7 +118,7 @@ func (c *InfluxClient) RetrieveCellMetrics(ueid string) ([]data.CellMetricsEntry
 
 	for result.Next() {
 		var cellMetricsEntry data.CellMetricsEntry
-		err := json.Unmarshal([]byte(result.Record().String()), &cellMetricsEntry)
+		err := json.Unmarshal([]byte(result.Record().Value().(string)), &cellMetricsEntry)
 		if err != nil {
 			xapp.Logger.Error("failed to unmarshal : %s", err)
 			return nil, err
