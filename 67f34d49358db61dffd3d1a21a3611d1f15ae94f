@@ -82,6 +82,30 @@
       "serverId": "84e4e190-e623-4c37-9eda-58b1937c1b53"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b1ff0d47_4add6031",
+        "filename": "control/control.go",
+        "patchSetId": 1
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 1001907
+      },
+      "writtenOn": "2022-12-06T05:25:20Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "24f53cdc_c1dce0e0",
+      "range": {
+        "startLine": 115,
+        "startChar": 1,
+        "endLine": 119,
+        "endChar": 118
+      },
+      "revId": "67f34d49358db61dffd3d1a21a3611d1f15ae94f",
+      "serverId": "84e4e190-e623-4c37-9eda-58b1937c1b53"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c4e3385d_0b761278",
@@ -119,6 +143,30 @@
       "side": 1,
       "message": "thanks :) I thought that range can be changeable by test case or data.",
       "parentUuid": "c4e3385d_0b761278",
+      "range": {
+        "startLine": 107,
+        "startChar": 5,
+        "endLine": 107,
+        "endChar": 15
+      },
+      "revId": "67f34d49358db61dffd3d1a21a3611d1f15ae94f",
+      "serverId": "84e4e190-e623-4c37-9eda-58b1937c1b53"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "19a585cf_75d96462",
+        "filename": "influx/influx_client.go",
+        "patchSetId": 1
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1001907
+      },
+      "writtenOn": "2022-12-06T05:25:20Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "83bbe489_a66667a7",
       "range": {
         "startLine": 107,
         "startChar": 5,
