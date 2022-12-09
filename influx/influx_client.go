@@ -93,7 +93,7 @@ func (c *InfluxClient) getQueryRange() string {
 	return `|> range(start: ` + start + `, stop: ` + stop + `)`
 }
 
-func (c *InfluxClient) RetrieveCellMetrics(ueid string) ([]data.CellMetricsEntry, error) {
+func (c *InfluxClient) RetrieveCellMetrics() ([]data.CellMetricsEntry, error) {
 
 	queryApi := c.client.QueryApi(c.influx.Org)
 
