@@ -34,7 +34,7 @@ ENV GO111MODULE=on GO_ENABLED=0 GOOS=linux
 COPY . .
 
 RUN mkdir /opt/qoe-aiml-assist/build \
-    && go build -mod vendor -o /opt/qoe-aiml-assist/build/qoe-aiml-assist qoe-aiml-assist.go
+    && go mod vendor && go build -mod vendor -o /opt/qoe-aiml-assist/build/qoe-aiml-assist qoe-aiml-assist.go
 
 FROM ubuntu:20.04
 
