@@ -20,7 +20,7 @@
 package main
 
 import (
-	"gerrit.o-ran-sc.org/r/qp-aiml/control"
+	"gerrit.o-ran-sc.org/r/ric-app/qp-aimlfw/control"
 	"gerrit.o-ran-sc.org/r/ric-plt/xapp-frame/pkg/xapp"
 )
 
