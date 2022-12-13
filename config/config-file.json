@@ -35,13 +35,13 @@
         "periodSeconds": 15
     },
     "appenv": {
-        "ricMsgBufChanLen": 256,
         "INFLUX_URL": "",
         "INFLUX_TOKEN": "",
         "INFLUX_BUCKET": "aiml",
         "INFLUX_ORG": "primary",
         "INFLUX_QUERY_START": "-1m",
         "INFLUX_QUERY_STOP": "",
+        "RIC_MSG_BUF_CHAN_LEN": 256,
         "MLXAPP_HEADERHOST": "qoe-model.kserve-test.example.com",
         "MLXAPP_HOST": "",
         "MLXAPP_PORT": "3",

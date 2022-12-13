@@ -24,9 +24,9 @@ import (
 	"encoding/json"
 	"os"
 
-	"gerrit.o-ran-sc.org/r/qp-aiml/data"
+	"gerrit.o-ran-sc.org/r/ric-app/qp-aimlfw/data"
 	"gerrit.o-ran-sc.org/r/ric-plt/xapp-frame/pkg/xapp"
-	influxdb2 "github.com/influxdata/influxdb-client-go"
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/spf13/viper"
 )
 
@@ -45,7 +45,12 @@ type InfluxConfigs struct {
 	Org    string
 }
 
-type InfluxClient struct {
+//go:generate mockgen -package mocks -source=$GOFILE -destination=./mocks/mock_$GOFILE
+type InfluxDBCommand interface {
+	RetrieveCellMetrics() ([]data.CellMetricsEntry, error)
+}
+
+type InfluxDB struct {
 	influx InfluxConfigs
 	client influxdb2.Client
 }
@@ -58,7 +63,7 @@ func init() {
 	viper.BindEnv("ORG")
 }
 
-func CreateInfluxClient() InfluxClient {
+func CreateInfluxDB() InfluxDB {
 	var InfluxConfig InfluxConfigs
 	err := viper.Unmarshal(&InfluxConfig)
 	if err != nil {
@@ -72,13 +77,13 @@ func CreateInfluxClient() InfluxClient {
 
 	client := influxdb2.NewClientWithOptions(InfluxConfig.Url, InfluxConfig.Token, influxdb2.DefaultOptions().SetBatchSize(20))
 
-	return InfluxClient{
+	return InfluxDB{
 		InfluxConfig,
 		client,
 	}
 }
 
-func (c *InfluxClient) getQueryRange() string {
+func (c *InfluxDB) getQueryRange() string {
 	start := os.Getenv(ENV_INFLUX_QUERY_START)
 	stop := os.Getenv(ENV_INFLUX_QUERY_STOP)
 
@@ -93,9 +98,9 @@ func (c *InfluxClient) getQueryRange() string {
 	return `|> range(start: ` + start + `, stop: ` + stop + `)`
 }
 
-func (c *InfluxClient) RetrieveCellMetrics() ([]data.CellMetricsEntry, error) {
+func (c *InfluxDB) RetrieveCellMetrics() ([]data.CellMetricsEntry, error) {
 
-	queryApi := c.client.QueryApi(c.influx.Org)
+	queryAPI := c.client.QueryAPI(c.influx.Org)
 
 	queryRange := c.getQueryRange()
 
@@ -108,7 +113,7 @@ func (c *InfluxClient) RetrieveCellMetrics() ([]data.CellMetricsEntry, error) {
 	|> filter(fn: (r)=>r["_measurement"] == "` + INFLUX_MEASUREMENT_NAME + `")
 	|> filter(fn: (r) => r["_field"] == "` + INFLUX_FIELD_NAME + `")`
 
-	result, err := queryApi.Query(context.Background(), query)
+	result, err := queryAPI.Query(context.Background(), query)
 	if err != nil {
 		xapp.Logger.Error("failed to query (%s) : %s", query, err)
 		return nil, err
@@ -125,5 +130,6 @@ func (c *InfluxClient) RetrieveCellMetrics() ([]data.CellMetricsEntry, error) {
 		}
 		cellMetricsEntries = append(cellMetricsEntries, cellMetricsEntry)
 	}
+
 	return cellMetricsEntries, nil
 }

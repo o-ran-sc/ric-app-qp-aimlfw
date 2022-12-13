@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 #==================================================================================
-FROM nexus3.o-ran-sc.org:10002/o-ran-sc/bldr-ubuntu20-c-go:1.0.0 as builder
+FROM nexus3.o-ran-sc.org:10002/o-ran-sc/bldr-ubuntu20-c-go:1.1.0 as builder
 
 RUN wget --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr_4.7.0_amd64.deb/download.deb && dpkg -i rmr_4.7.0_amd64.deb && rm -rf rmr_4.7.0_amd64.deb
 RUN wget --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr-dev_4.7.0_amd64.deb/download.deb && dpkg -i rmr-dev_4.7.0_amd64.deb && rm -rf rmr-dev_4.7.0_amd64.deb
@@ -33,8 +33,7 @@ ENV GO111MODULE=on GO_ENABLED=0 GOOS=linux
 
 COPY . .
 
-RUN mkdir /opt/qoe-aiml-assist/build \
-    && go mod vendor && go build -mod vendor -o /opt/qoe-aiml-assist/build/qoe-aiml-assist qoe-aiml-assist.go
+RUN go mod tidy -compat=1.17 && go mod vendor && go build -o build/qoe-aiml-assist
 
 FROM ubuntu:20.04
 
