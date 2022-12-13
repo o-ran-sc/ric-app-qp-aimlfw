@@ -1,84 +1,84 @@
-module gerrit.o-ran-sc.org/r/qp-aiml
+module gerrit.o-ran-sc.org/r/ric-app/qp-aimlfw
 
 go 1.17
 
 require (
 	gerrit.o-ran-sc.org/r/ric-plt/xapp-frame v0.9.3
 	github.com/go-resty/resty/v2 v2.7.0
-	github.com/influxdata/influxdb-client-go v1.4.0
-	github.com/spf13/viper v1.13.0
+	github.com/golang/mock v1.6.0
+	github.com/influxdata/influxdb-client-go/v2 v2.12.1
+	github.com/spf13/viper v1.14.0
+	github.com/stretchr/testify v1.8.1
 )
 
 require (
 	gerrit.o-ran-sc.org/r/com/golog v0.0.2 // indirect
-	gerrit.o-ran-sc.org/r/ric-plt/alarm-go.git/alarm v0.5.1-0.20211223104552-f7d2cf80e85c // indirect
-	gerrit.o-ran-sc.org/r/ric-plt/nodeb-rnib.git/common v1.2.1 // indirect
-	gerrit.o-ran-sc.org/r/ric-plt/nodeb-rnib.git/entities v1.2.1 // indirect
-	gerrit.o-ran-sc.org/r/ric-plt/nodeb-rnib.git/reader v1.2.1 // indirect
+	gerrit.o-ran-sc.org/r/ric-plt/alarm-go.git/alarm v0.5.14 // indirect
+	gerrit.o-ran-sc.org/r/ric-plt/nodeb-rnib.git/common v1.2.6 // indirect
+	gerrit.o-ran-sc.org/r/ric-plt/nodeb-rnib.git/entities v1.2.6 // indirect
+	gerrit.o-ran-sc.org/r/ric-plt/nodeb-rnib.git/reader v1.2.6 // indirect
 	gerrit.o-ran-sc.org/r/ric-plt/sdlgo v0.8.0 // indirect
-	github.com/PuerkitoBio/purell v1.1.1 // indirect
-	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
-	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
+	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
+	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/deepmap/oapi-codegen v1.3.6 // indirect
-	github.com/docker/go-units v0.4.0 // indirect
-	github.com/fsnotify/fsnotify v1.5.4 // indirect
-	github.com/go-openapi/analysis v0.19.5 // indirect
-	github.com/go-openapi/errors v0.19.3 // indirect
+	github.com/deepmap/oapi-codegen v1.12.4 // indirect
+	github.com/docker/go-units v0.5.0 // indirect
+	github.com/fsnotify/fsnotify v1.6.0 // indirect
+	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/go-openapi/analysis v0.21.4 // indirect
+	github.com/go-openapi/errors v0.20.3 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
-	github.com/go-openapi/jsonreference v0.19.3 // indirect
-	github.com/go-openapi/loads v0.19.4 // indirect
-	github.com/go-openapi/runtime v0.19.4 // indirect
-	github.com/go-openapi/spec v0.19.3 // indirect
-	github.com/go-openapi/strfmt v0.19.4 // indirect
-	github.com/go-openapi/swag v0.19.7 // indirect
-	github.com/go-openapi/validate v0.19.6 // indirect
+	github.com/go-openapi/jsonreference v0.20.0 // indirect
+	github.com/go-openapi/loads v0.21.2 // indirect
+	github.com/go-openapi/runtime v0.25.0 // indirect
+	github.com/go-openapi/spec v0.20.7 // indirect
+	github.com/go-openapi/strfmt v0.21.3 // indirect
+	github.com/go-openapi/swag v0.22.3 // indirect
+	github.com/go-openapi/validate v0.22.0 // indirect
 	github.com/go-redis/redis v6.15.9+incompatible // indirect
-	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
-	github.com/jessevdk/go-flags v1.4.0 // indirect
-	github.com/labstack/echo/v4 v4.1.11 // indirect
-	github.com/labstack/gommon v0.3.0 // indirect
+	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf // indirect
+	github.com/jessevdk/go-flags v1.5.0 // indirect
+	github.com/josharian/intern v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
-	github.com/mailru/easyjson v0.7.0 // indirect
-	github.com/mattn/go-colorable v0.1.12 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/onsi/ginkgo v1.16.4 // indirect
-	github.com/onsi/gomega v1.16.0 // indirect
+	github.com/oklog/ulid v1.3.1 // indirect
+	github.com/onsi/ginkgo v1.16.5 // indirect
+	github.com/onsi/gomega v1.24.1 // indirect
+	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
-	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
+	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.11.1 // indirect
-	github.com/prometheus/client_model v0.2.0 // indirect
-	github.com/prometheus/common v0.26.0 // indirect
-	github.com/prometheus/procfs v0.6.0 // indirect
-	github.com/spf13/afero v1.8.2 // indirect
+	github.com/prometheus/client_golang v1.14.0 // indirect
+	github.com/prometheus/client_model v0.3.0 // indirect
+	github.com/prometheus/common v0.37.0 // indirect
+	github.com/prometheus/procfs v0.8.0 // indirect
+	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/objx v0.4.0 // indirect
-	github.com/stretchr/testify v1.8.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
-	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasttemplate v1.1.0 // indirect
-	go.mongodb.org/mongo-driver v1.1.2 // indirect
-	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
-	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
-	golang.org/x/text v0.3.7 // indirect
-	google.golang.org/protobuf v1.28.0 // indirect
+	go.mongodb.org/mongo-driver v1.11.0 // indirect
+	go.opentelemetry.io/otel v1.11.1 // indirect
+	go.opentelemetry.io/otel/trace v1.11.1 // indirect
+	golang.org/x/net v0.4.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/utils v0.0.0-20201110183641-67b214c5f920 // indirect
+	k8s.io/utils v0.0.0-20221128185143-99ec85e7a448 // indirect
 )
 
 replace gerrit.o-ran-sc.org/r/ric-plt/xapp-frame => gerrit.o-ran-sc.org/r/ric-plt/xapp-frame.git v0.9.3
@@ -86,3 +86,5 @@ replace gerrit.o-ran-sc.org/r/ric-plt/xapp-frame => gerrit.o-ran-sc.org/r/ric-pl
 replace gerrit.o-ran-sc.org/r/com/golog => gerrit.o-ran-sc.org/r/com/golog.git v0.0.2
 
 replace gerrit.o-ran-sc.org/r/ric-plt/sdlgo => gerrit.o-ran-sc.org/r/ric-plt/sdlgo.git v0.8.0
+
+replace go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.10.0 // indirect

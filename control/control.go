@@ -26,8 +26,8 @@ import (
 	"os"
 	"strconv"
 
-	"gerrit.o-ran-sc.org/r/qp-aiml/data"
-	"gerrit.o-ran-sc.org/r/qp-aiml/influx"
+	"gerrit.o-ran-sc.org/r/ric-app/qp-aimlfw/data"
+	"gerrit.o-ran-sc.org/r/ric-app/qp-aimlfw/influx"
 	"gerrit.o-ran-sc.org/r/ric-plt/xapp-frame/pkg/xapp"
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/viper"
@@ -37,7 +37,7 @@ const (
 	DEFAULT_MSG_BUF_CHAN_LEN int = 256
 	SIGNITURE_NAME               = "serving_default"
 
-	ENV_RIC_MSG_BUF_CHAN_LEN = "ricMsgBufChanLen"
+	ENV_RIC_MSG_BUF_CHAN_LEN = "RIC_MSG_BUF_CHAN_LEN"
 	ENV_INFLUX_URL           = "INFLUX_URL"
 	ENV_WAIT_SDL             = "db.waitForSdl"
 
@@ -48,8 +48,25 @@ const (
 	ENV_MLXAPP_REQ_URL         = "REQURL"
 )
 
+type RmrCommand interface {
+	SendRts(*xapp.RMRParams) bool
+	GetRicMessageName(int) string
+}
+
+type RmrWrapper struct {
+}
+
+func (rw RmrWrapper) SendRts(msg *xapp.RMRParams) bool {
+	return xapp.Rmr.SendRts(msg)
+}
+
+func (rw RmrWrapper) GetRicMessageName(id int) string {
+	return xapp.Rmr.GetRicMessageName(id)
+}
+
 type Control struct {
-	influxClient  influx.InfluxClient
+	RmrCommand
+	influxDB      influx.InfluxDBCommand
 	rcChan        chan *xapp.RMRParams
 	mlxAppConfigs MLxAppConfigs
 }
@@ -61,8 +78,16 @@ type MLxAppConfigs struct {
 	ReqUrl     string
 }
 
+func init() {
+	viper.SetEnvPrefix(ENV_MLXAPP_PREFIX)
+	viper.BindEnv(ENV_MLXAPP_REQ_HEADER_HOST)
+	viper.BindEnv(ENV_MLXAPP_HOST)
+	viper.BindEnv(ENV_MLXAPP_PORT)
+	viper.BindEnv(ENV_MLXAPP_REQ_URL)
+}
+
 func NewControl() Control {
-	influxClient := influx.CreateInfluxClient()
+	influxDB := influx.CreateInfluxDB()
 	ricMsgBufChanLen, _ := getEnvAndSetInt(DEFAULT_MSG_BUF_CHAN_LEN, ENV_RIC_MSG_BUF_CHAN_LEN)
 
 	var mlxAppConfigs MLxAppConfigs
@@ -76,7 +101,12 @@ func NewControl() Control {
 	}
 	xapp.Logger.Debug("MLxAppConfigs : %s", out)
 
-	return Control{influxClient, make(chan *xapp.RMRParams, ricMsgBufChanLen), mlxAppConfigs}
+	return Control{
+		influxDB:      &influxDB,
+		rcChan:        make(chan *xapp.RMRParams, ricMsgBufChanLen),
+		mlxAppConfigs: mlxAppConfigs,
+		RmrCommand:    RmrWrapper{},
+	}
 }
 
 func getEnvAndSetInt(val int, envKey string) (int, bool) {
@@ -104,18 +134,18 @@ func (c *Control) Run() {
 	xapp.RunWithParams(c, waitForSdl)
 }
 
-func (c *Control) handleRequestPrediction(ranName string, msg *xapp.RMRParams) {
-
+func (c *Control) handleRequestPrediction(msg *xapp.RMRParams) {
 	var predictRequest data.PredictRequest
 	err := json.Unmarshal(msg.Payload, &predictRequest)
 	if err != nil {
 		xapp.Logger.Error("failed to unmarshal msg : %s", err)
 		return
 	}
+
 	ueid := predictRequest.UEPredictionSet[0]
 	xapp.Logger.Info("requested UEPredictionSet = %s", ueid)
 
-	cellMetricsEntries, err := c.influxClient.RetrieveCellMetrics()
+	cellMetricsEntries, err := c.influxDB.RetrieveCellMetrics()
 	if err != nil {
 		xapp.Logger.Error("failed to RetrieveCellMetrics")
 		return
@@ -142,7 +172,7 @@ func (c *Control) handleRequestPrediction(ranName string, msg *xapp.RMRParams) {
 		Post(fmt.Sprintf("%s:%s/%s", c.mlxAppConfigs.Host, c.mlxAppConfigs.Port, c.mlxAppConfigs.ReqUrl))
 
 	if err != nil || resp == nil || resp.StatusCode() != http.StatusOK {
-		xapp.Logger.Error("failed to POST : err = %s, resp = %s, code = %s, sendmsg = %s", err, resp, resp.StatusCode(), qoePrectionInput)
+		xapp.Logger.Error("failed to POST : err = %s, resp = %s, code = %d, sendmsg = %v", err, resp, resp.StatusCode(), qoePrectionInput)
 		return
 	}
 
@@ -167,7 +197,7 @@ func (c *Control) controlLoop() {
 		xapp.Logger.Debug("Received message type: %d", msg.Mtype)
 		switch msg.Mtype {
 		case xapp.TS_UE_LIST:
-			go c.handleRequestPrediction(msg.Meid.RanName, msg)
+			go c.handleRequestPrediction(msg)
 		default:
 			xapp.Logger.Info("Unknown message type '%d', discarding", msg.Mtype)
 		}
@@ -178,12 +208,12 @@ func (c *Control) sendPredictionResult(msg *xapp.RMRParams, respBody []byte) {
 	msg.Mtype = xapp.TS_QOE_PREDICTION
 	msg.PayloadLen = len(respBody)
 	msg.Payload = respBody
-	ret := xapp.Rmr.SendRts(msg)
-	xapp.Logger.Info("result of SendPredictionResult = %s", ret)
+	ret := c.SendRts(msg)
+	xapp.Logger.Info("result of SendPredictionResult = %t", ret)
 }
 
 func (c *Control) Consume(msg *xapp.RMRParams) (err error) {
-	id := xapp.Rmr.GetRicMessageName(msg.Mtype)
+	id := c.GetRicMessageName(msg.Mtype)
 	xapp.Logger.Info(
 		"Message received: name=%s meid=%s subId=%d txid=%s len=%d",
 		id,
