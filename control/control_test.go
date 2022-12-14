@@ -17,11 +17,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func createPostTestServer() *httptest.Server {
+func createPostTestServer(expectedHttpStatus int, expectedBody []byte) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if req.Method == http.MethodPost {
 			if req.URL.Path == "/v1/models/qoe-model:predict" {
 				rw.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+				rw.WriteHeader(expectedHttpStatus)
+				rw.Write(expectedBody)
 				return
 			}
 		}
@@ -41,7 +43,7 @@ func TestNewControl_ExpectSuccess(t *testing.T) {
 }
 
 func TestHandleRequestPrediction_ExpectSuccess(t *testing.T) {
-	server := createPostTestServer()
+	server := createPostTestServer(http.StatusOK, nil)
 	defer server.Close()
 
 	ctrl := gomock.NewController(t)
@@ -91,7 +93,7 @@ func TestHandleRequestPrediction_ExpectSuccess(t *testing.T) {
 }
 
 func TestNegativeHandleRequestPrediction_WhenRequestUnmarshalFailed_ExpectReturn(t *testing.T) {
-	server := createPostTestServer()
+	server := createPostTestServer(http.StatusOK, nil)
 	defer server.Close()
 
 	ctrl := gomock.NewController(t)
@@ -150,15 +152,7 @@ func TestNegativeHandleRequestPrediction_WhenInfluxQueryResultEmpty_ExpectReturn
 }
 
 func TestNegativeHandleRequestPrediction_WhenResponseStatusBadRequest_ExpectReturn(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method == http.MethodPost {
-			if req.URL.Path == "/v1/models/qoe-model:predict" {
-				rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-				rw.WriteHeader(http.StatusBadRequest)
-				return
-			}
-		}
-	}))
+	server := createPostTestServer(http.StatusBadRequest, nil)
 	defer server.Close()
 
 	ctrl := gomock.NewController(t)
@@ -206,4 +200,184 @@ func TestConsume_ExpectSuccess(t *testing.T) {
 	ret := <-control.rcChan
 
 	assert.NotNil(t, ret)
+}
+
+func TestHandleRequestQoEPrediction_ExpectSuccess(t *testing.T) {
+	pr, _ := json.Marshal(data.QoePredictionRequest{
+		PredictionUE: "12345",
+		UEMeasurement: data.UEMeasurementType{
+			ServingCellID:            "310-680-200-555002",
+			MeasTimestampUEPDCPBytes: "2020-03-18 02:23:18.220",
+			MeasPeriodUEPDCPBytes:    20,
+			UEPDCPBytesDL:            2500000,
+			UEPDCPBytesUL:            1000000,
+			MeasTimestampUEPRBUsage:  "2020-03-18 02:23:18.220",
+			MeasPeriodUEPRBUsage:     20,
+			UEPRBUsageDL:             10,
+			UEPRBUsageUL:             30,
+		},
+		CellMeasurements: []data.CellMeasurement{
+			data.CellMeasurement{
+				CellID:                 "310-680-220-555001",
+				MeasTimestampPDCPBytes: "2020-03-18 02:23:18.220",
+				MeasPeriodPDCPBytes:    20,
+				PDCPBytesDL:            250000,
+				PDCPBytesUL:            100000,
+				MeasTimestampAvailPRB:  "2020-03-18 02:23:18.220",
+				MeasPeriodAvailPRB:     20,
+				AvailPRBDL:             30,
+				AvailPRBUL:             50,
+				MeasTimestampRF:        "2020-03-18 02:23:18.220",
+				MeasPeriodRF:           40,
+				RFMeasurements:         data.RFMeasurement{RSRP: -90, RSRQ: -13, RSSINR: -2.5},
+			},
+			data.CellMeasurement{
+				CellID:                 "310-680-220-555003",
+				MeasTimestampPDCPBytes: "2020-03-18 02:23:18.220",
+				MeasPeriodPDCPBytes:    20,
+				PDCPBytesDL:            200000,
+				PDCPBytesUL:            120000,
+				MeasTimestampAvailPRB:  "2020-03-18 02:23:18.220",
+				MeasPeriodAvailPRB:     20,
+				AvailPRBDL:             60,
+				AvailPRBUL:             80,
+				MeasTimestampRF:        "2020-03-18 02:23:18.220",
+				MeasPeriodRF:           40,
+				RFMeasurements:         data.RFMeasurement{RSRP: -140, RSRQ: -17, RSSINR: -6},
+			},
+			data.CellMeasurement{
+				CellID:                 "310-680-220-555002",
+				MeasTimestampPDCPBytes: "2020-03-18 02:23:18.220",
+				MeasPeriodPDCPBytes:    20,
+				PDCPBytesDL:            190000,
+				PDCPBytesUL:            100000,
+				MeasTimestampAvailPRB:  "2020-03-18 02:23:18.220",
+				MeasPeriodAvailPRB:     20,
+				AvailPRBDL:             30,
+				AvailPRBUL:             45,
+				MeasTimestampRF:        "2020-03-18 02:23:18.220",
+				MeasPeriodRF:           40,
+				RFMeasurements:         data.RFMeasurement{RSRP: -115, RSRQ: -16, RSSINR: -5},
+			},
+		},
+	})
+
+	qpr, _ := json.Marshal(data.QoePredictionResult{
+		Predictions: [][]float32{{0.20054793, 0.2541615}, {0.19025849, 0.24147518}, {0.17816328, 0.2247211}},
+	})
+
+	server := createPostTestServer(http.StatusOK, qpr)
+	defer server.Close()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	t.Setenv("RIC_MSG_BUF_CHAN_LEN", "256")
+	t.Setenv("MLXAPP_HEADERHOST", "qoe-model.kserve-test.example.com")
+	t.Setenv("MLXAPP_HOST", strings.Join(strings.Split(server.URL, ":")[:2], ":"))
+	t.Setenv("MLXAPP_PORT", strings.Split(server.URL, ":")[2])
+	t.Setenv("MLXAPP_REQURL", "v1/models/qoe-model:predict")
+
+	msg := &xapp.RMRParams{
+		Payload: pr,
+	}
+
+	control := NewControl()
+	control.RmrCommand = mocks_control.NewFakeRMRClient()
+
+	control.handleRequestQoEPrediction(msg)
+}
+
+func TestNegativeHandleQoERequestPrediction_WhenRequestUnmarshalFailed_ExpectReturn(t *testing.T) {
+	server := createPostTestServer(http.StatusOK, nil)
+	defer server.Close()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	msg := &xapp.RMRParams{}
+
+	control := NewControl()
+	control.RmrCommand = mocks_control.NewFakeRMRClient()
+
+	control.handleRequestQoEPrediction(msg)
+}
+
+func TestNegativeHandleRequestQoEPrediction_WhenResponseStatusBadRequest_ExpectReturn(t *testing.T) {
+	server := createPostTestServer(http.StatusBadRequest, nil)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	t.Setenv("RIC_MSG_BUF_CHAN_LEN", "256")
+	t.Setenv("MLXAPP_HEADERHOST", "qoe-model.kserve-test.example.com")
+	t.Setenv("MLXAPP_HOST", strings.Join(strings.Split(server.URL, ":")[:2], ":"))
+	t.Setenv("MLXAPP_PORT", strings.Split(server.URL, ":")[2])
+	t.Setenv("MLXAPP_REQURL", "v1/models/qoe-model:predict")
+
+	pr, _ := json.Marshal(data.QoePredictionRequest{
+		PredictionUE: "12345",
+		UEMeasurement: data.UEMeasurementType{
+			ServingCellID:            "310-680-200-555002",
+			MeasTimestampUEPDCPBytes: "2020-03-18 02:23:18.220",
+			MeasPeriodUEPDCPBytes:    20,
+			UEPDCPBytesDL:            2500000,
+			UEPDCPBytesUL:            1000000,
+			MeasTimestampUEPRBUsage:  "2020-03-18 02:23:18.220",
+			MeasPeriodUEPRBUsage:     20,
+			UEPRBUsageDL:             10,
+			UEPRBUsageUL:             30,
+		},
+		CellMeasurements: []data.CellMeasurement{
+			data.CellMeasurement{
+				CellID:                 "310-680-220-555001",
+				MeasTimestampPDCPBytes: "2020-03-18 02:23:18.220",
+				MeasPeriodPDCPBytes:    20,
+				PDCPBytesDL:            250000,
+				PDCPBytesUL:            100000,
+				MeasTimestampAvailPRB:  "2020-03-18 02:23:18.220",
+				MeasPeriodAvailPRB:     20,
+				AvailPRBDL:             30,
+				AvailPRBUL:             50,
+				MeasTimestampRF:        "2020-03-18 02:23:18.220",
+				MeasPeriodRF:           40,
+				RFMeasurements:         data.RFMeasurement{RSRP: -90, RSRQ: -13, RSSINR: -2.5},
+			},
+			data.CellMeasurement{
+				CellID:                 "310-680-220-555003",
+				MeasTimestampPDCPBytes: "2020-03-18 02:23:18.220",
+				MeasPeriodPDCPBytes:    20,
+				PDCPBytesDL:            200000,
+				PDCPBytesUL:            120000,
+				MeasTimestampAvailPRB:  "2020-03-18 02:23:18.220",
+				MeasPeriodAvailPRB:     20,
+				AvailPRBDL:             60,
+				AvailPRBUL:             80,
+				MeasTimestampRF:        "2020-03-18 02:23:18.220",
+				MeasPeriodRF:           40,
+				RFMeasurements:         data.RFMeasurement{RSRP: -140, RSRQ: -17, RSSINR: -6},
+			},
+			data.CellMeasurement{
+				CellID:                 "310-680-220-555002",
+				MeasTimestampPDCPBytes: "2020-03-18 02:23:18.220",
+				MeasPeriodPDCPBytes:    20,
+				PDCPBytesDL:            190000,
+				PDCPBytesUL:            100000,
+				MeasTimestampAvailPRB:  "2020-03-18 02:23:18.220",
+				MeasPeriodAvailPRB:     20,
+				AvailPRBDL:             30,
+				AvailPRBUL:             45,
+				MeasTimestampRF:        "2020-03-18 02:23:18.220",
+				MeasPeriodRF:           40,
+				RFMeasurements:         data.RFMeasurement{RSRP: -115, RSRQ: -16, RSSINR: -5},
+			},
+		},
+	})
+
+	msg := &xapp.RMRParams{
+		Payload: pr,
+	}
+
+	control := NewControl()
+	control.RmrCommand = mocks_control.NewFakeRMRClient()
+
+	control.handleRequestQoEPrediction(msg)
 }

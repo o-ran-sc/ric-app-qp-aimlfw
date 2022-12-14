@@ -49,11 +49,16 @@ const (
 )
 
 type RmrCommand interface {
+	Send(*xapp.RMRParams, bool) bool
 	SendRts(*xapp.RMRParams) bool
 	GetRicMessageName(int) string
 }
 
 type RmrWrapper struct {
+}
+
+func (rw RmrWrapper) Send(msg *xapp.RMRParams, isRts bool) bool {
+	return xapp.Rmr.Send(msg, isRts)
 }
 
 func (rw RmrWrapper) SendRts(msg *xapp.RMRParams) bool {
@@ -134,6 +139,79 @@ func (c *Control) Run() {
 	xapp.RunWithParams(c, waitForSdl)
 }
 
+func (c *Control) sendRequestToMLxApp(jsonMsg []byte) []byte {
+	client := resty.New()
+	resp, err := client.R().
+		SetHeader("Content-Type", "application/x-www-form-urlencoded").
+		SetHeader("Host", c.mlxAppConfigs.HeaderHost).
+		EnableTrace().
+		SetBody(jsonMsg).
+		Post(fmt.Sprintf("%s:%s/%s", c.mlxAppConfigs.Host, c.mlxAppConfigs.Port, c.mlxAppConfigs.ReqUrl))
+
+	if err != nil || resp == nil || resp.StatusCode() != http.StatusOK {
+		xapp.Logger.Error("failed to POST : err = %s, resp = %s, code = %d", err, resp, resp.StatusCode())
+		return nil
+	}
+
+	xapp.Logger.Info("Response from MLxApp : %s", resp)
+	return resp.Body()
+}
+
+func (c *Control) handleRequestQoEPrediction(msg *xapp.RMRParams) {
+	var qoePredictionRequest data.QoePredictionRequest
+	err := json.Unmarshal(msg.Payload, &qoePredictionRequest)
+	if err != nil {
+		xapp.Logger.Error("filed to unmarshal msg : %s", err)
+		return
+	}
+	xapp.Logger.Info("Received Msg : %+v", qoePredictionRequest)
+
+	var qoePredictionInput data.QoePredictionInput
+	qoePredictionInput.SignatureName = SIGNITURE_NAME
+
+	for i := 0; i < len(qoePredictionRequest.CellMeasurements); i++ {
+		qoePredictionInput.Instances = append(qoePredictionInput.Instances, [][]float32{})
+		qoePredictionInput.Instances[i] = append(qoePredictionInput.Instances[i], []float32{float32(qoePredictionRequest.CellMeasurements[i].PDCPBytesUL), float32(qoePredictionRequest.CellMeasurements[i].PDCPBytesDL)})
+	}
+	xapp.Logger.Info("Qoe Prediction Request = %v", qoePredictionInput)
+
+	jsonbytes, err := json.Marshal(qoePredictionInput)
+	if err != nil {
+		xapp.Logger.Error("fail to marshal : %s", err)
+		return
+	}
+
+	response := c.sendRequestToMLxApp(jsonbytes)
+	if response == nil {
+		xapp.Logger.Error("fail to request prediction to MLxApp")
+		return
+	}
+
+	var qoePredictionResult data.QoePredictionResult
+	err = json.Unmarshal(response, &qoePredictionResult)
+	if err != nil {
+		xapp.Logger.Error("filed to unmarshal msg : %s", err)
+		return
+	}
+	xapp.Logger.Debug("Unmarshaled response: %+v", qoePredictionResult)
+
+	predictions := make(map[string][]float32)
+	for i := 0; i < len(qoePredictionRequest.CellMeasurements); i++ {
+		predictions[qoePredictionRequest.CellMeasurements[i].CellID] = []float32{qoePredictionResult.Predictions[i][0], qoePredictionResult.Predictions[i][1]}
+	}
+	predResultMsg := make(map[string]map[string][]float32)
+	predResultMsg[qoePredictionRequest.PredictionUE] = predictions
+
+	jsonBytes, err := json.Marshal(predResultMsg)
+	if err != nil {
+		xapp.Logger.Error("filed to marshal msg : %s", err)
+		return
+	}
+	xapp.Logger.Info("QoE Prediction Result Msg : " + string(jsonBytes))
+
+	c.sendPredictionResult(msg, jsonBytes)
+}
+
 func (c *Control) handleRequestPrediction(msg *xapp.RMRParams) {
 	var predictRequest data.PredictRequest
 	err := json.Unmarshal(msg.Payload, &predictRequest)
@@ -163,21 +241,13 @@ func (c *Control) handleRequestPrediction(msg *xapp.RMRParams) {
 		return
 	}
 
-	client := resty.New()
-	resp, err := client.R().
-		SetHeader("Content-Type", "application/x-www-form-urlencoded").
-		SetHeader("Host", c.mlxAppConfigs.HeaderHost).
-		EnableTrace().
-		SetBody(jsonbytes).
-		Post(fmt.Sprintf("%s:%s/%s", c.mlxAppConfigs.Host, c.mlxAppConfigs.Port, c.mlxAppConfigs.ReqUrl))
-
-	if err != nil || resp == nil || resp.StatusCode() != http.StatusOK {
-		xapp.Logger.Error("failed to POST : err = %s, resp = %s, code = %d, sendmsg = %v", err, resp, resp.StatusCode(), qoePrectionInput)
+	response := c.sendRequestToMLxApp(jsonbytes)
+	if response == nil {
+		xapp.Logger.Error("fail to request prediction to MLxApp")
 		return
 	}
 
-	xapp.Logger.Info("Response from MLxApp : %s", resp)
-	c.sendPredictionResult(msg, resp.Body())
+	c.sendPredictionResult(msg, response)
 }
 
 func (c *Control) makeRequestPredictionMsg(cellMetricsEntries []data.CellMetricsEntry) data.QoePredictionInput {
@@ -198,6 +268,8 @@ func (c *Control) controlLoop() {
 		switch msg.Mtype {
 		case xapp.TS_UE_LIST:
 			go c.handleRequestPrediction(msg)
+		case xapp.TS_QOE_PRED_REQ:
+			go c.handleRequestQoEPrediction(msg)
 		default:
 			xapp.Logger.Info("Unknown message type '%d', discarding", msg.Mtype)
 		}
@@ -208,7 +280,7 @@ func (c *Control) sendPredictionResult(msg *xapp.RMRParams, respBody []byte) {
 	msg.Mtype = xapp.TS_QOE_PREDICTION
 	msg.PayloadLen = len(respBody)
 	msg.Payload = respBody
-	ret := c.SendRts(msg)
+	ret := c.Send(msg, false)
 	xapp.Logger.Info("result of SendPredictionResult = %t", ret)
 }
 

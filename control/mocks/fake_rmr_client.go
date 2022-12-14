@@ -15,3 +15,7 @@ func (frw FakeRMRClient) SendRts(msg *xapp.RMRParams) bool {
 func (rw FakeRMRClient) GetRicMessageName(id int) string {
 	return "ricMessageName"
 }
+
+func (frw FakeRMRClient) Send(msg *xapp.RMRParams, isRts bool) bool {
+	return true
+}
