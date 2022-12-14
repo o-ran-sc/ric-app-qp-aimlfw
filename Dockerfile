@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && apt-get clean
 
+ENV LD_LIBRARY_PATH /usr/local/lib
 ENV PATH $PATH:/usr/local/bin:$GOPATH/bin
 
 RUN mkdir /opt/qoe-aiml-assist
@@ -34,6 +35,13 @@ ENV GO111MODULE=on GO_ENABLED=0 GOOS=linux
 COPY . .
 
 RUN go mod tidy -compat=1.17 && go mod vendor && go build -o build/qoe-aiml-assist
+
+# for unittest
+RUN sed -r "s/^(::1.*)/#\1/" /etc/hosts > /etc/hosts.new \
+    && cat /etc/hosts.new > /etc/hosts \
+    && cat /etc/hosts \
+    && go test -v ./influx ./control -test.coverprofile /tmp/qp_cover.out \
+    && go tool cover -html=/tmp/qp_cover.out -o /tmp/qp_cover.html
 
 FROM ubuntu:20.04
 
@@ -52,4 +60,6 @@ COPY --from=builder /opt/qoe-aiml-assist/build/qoe-aiml-assist .
 COPY --from=builder /usr/local/include /usr/local/include
 COPY --from=builder /usr/local/lib /usr/local/lib
 COPY --from=builder /opt/qoe-aiml-assist/config/* /opt/ric/config/
+COPY --from=builder /tmp/qp_cover.* /tmp/
+
 RUN ldconfig
