@@ -35,6 +35,10 @@ COPY . .
 
 RUN go mod tidy -compat=1.17 && go mod vendor && go build -o build/qoe-aiml-assist
 
+# for unittest
+RUN go test -v ./influx ./control -test.coverprofile /tmp/qp_cover.out \
+    && go tool cover -html=/tmp/qp_cover.out -o /tmp/qp_cover.html
+
 FROM ubuntu:20.04
 
 ENV CFG_FILE=config/config-file.json
@@ -52,4 +56,6 @@ COPY --from=builder /opt/qoe-aiml-assist/build/qoe-aiml-assist .
 COPY --from=builder /usr/local/include /usr/local/include
 COPY --from=builder /usr/local/lib /usr/local/lib
 COPY --from=builder /opt/qoe-aiml-assist/config/* /opt/ric/config/
+COPY --from=builder /tmp/qp_cover.* /tmp/
+
 RUN ldconfig

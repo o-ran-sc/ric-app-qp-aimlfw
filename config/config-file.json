@@ -70,7 +70,8 @@
                 "port": 4560,
                 "rxMessages": [
                     "RIC_HEALTH_CHECK_REQ",
-                    "TS_UE_LIST"
+                    "TS_UE_LIST",
+                    "TS_QOE_PRED_REQ"
                 ],
                 "txMessages": [
                     "RIC_HEALTH_CHECK_RESP",
@@ -103,7 +104,8 @@
         ],
         "rxMessages": [
             "RIC_HEALTH_CHECK_REQ",
-            "TS_UE_LIST"
+            "TS_UE_LIST",
+            "TS_QOE_PRED_REQ"
         ],
         "policies": [
             1
