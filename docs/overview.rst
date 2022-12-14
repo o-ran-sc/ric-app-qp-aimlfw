@@ -10,19 +10,75 @@ QoE Prediction assist xApp(ric-app-qp-aimlfw) is an xApp that supports QoE Predi
 The difference from the existing QoE Prediction(ric-app-qp) is that the function to interact with the MLxApp of AIMLFW is added and the inference function is removing.
 The main operations are as follows:
 
-#. Traffic Steering xApp transmits prediction request to QoE Prediction assist xApp.
-#. QoE Prediction assist xApp builds prediction request message using cell metrics from influxdb and then sends prediction request to MLxApp. Cell Metrics are stored in the influxDB by the KPIMON xApp.
+#. QP Driver xApp transmits prediction request to QoE Prediction assist xApp.
+#. QoE Prediction assist xApp builds prediction request message and then sends prediction request to MLxApp.
 #. QoE Prediction assist xApp receives the result of prediction from MLxApp.
 #. QoE Prediction assist xApp transmits the received prediction result to Traffic Sterring xApp.
 
 
 Expected Input
 --------------
-QoE Prediction assist xApp expects the following message along with the `TS_UE_LIST` message type through RMR.
+QoE Prediction assist xApp expects the following message along with the `TS_QOE_PRED_REQ` message type through RMR.
 
 .. code-block:: none 
 
-{"UEPredictionSet": ["Car-1"]}
+    {
+        PredictionUE: "12345",
+		UEMeasurement: {
+			ServingCellID:            "310-680-200-555002",
+			MeasTimestampUEPDCPBytes: "2020-03-18 02:23:18.220",
+			MeasPeriodUEPDCPBytes:    20,
+			UEPDCPBytesDL:            2500000,
+			UEPDCPBytesUL:            1000000,
+			MeasTimestampUEPRBUsage:  "2020-03-18 02:23:18.220",
+			MeasPeriodUEPRBUsage:     20,
+			UEPRBUsageDL:             10,
+			UEPRBUsageUL:             30,
+		},
+		CellMeasurements: [
+			{
+				CellID:                 "310-680-220-555001",
+				MeasTimestampPDCPBytes: "2020-03-18 02:23:18.220",
+				MeasPeriodPDCPBytes:    20,
+				PDCPBytesDL:            250000,
+				PDCPBytesUL:            100000,
+				MeasTimestampAvailPRB:  "2020-03-18 02:23:18.220",
+				MeasPeriodAvailPRB:     20,
+				AvailPRBDL:             30,
+				AvailPRBUL:             50,
+				MeasTimestampRF:        "2020-03-18 02:23:18.220",
+				MeasPeriodRF:           40,
+				RFMeasurements:         data.RFMeasurement{RSRP: -90, RSRQ: -13, RSSINR: -2.5},
+			},
+			{
+				CellID:                 "310-680-220-555003",
+				MeasTimestampPDCPBytes: "2020-03-18 02:23:18.220",
+				MeasPeriodPDCPBytes:    20,
+				PDCPBytesDL:            200000,
+				PDCPBytesUL:            120000,
+				MeasTimestampAvailPRB:  "2020-03-18 02:23:18.220",
+				MeasPeriodAvailPRB:     20,
+				AvailPRBDL:             60,
+				AvailPRBUL:             80,
+				MeasTimestampRF:        "2020-03-18 02:23:18.220",
+				MeasPeriodRF:           40,
+				RFMeasurements:         data.RFMeasurement{RSRP: -140, RSRQ: -17, RSSINR: -6},
+			},
+			{
+				CellID:                 "310-680-220-555002",
+				MeasTimestampPDCPBytes: "2020-03-18 02:23:18.220",
+				MeasPeriodPDCPBytes:    20,
+				PDCPBytesDL:            190000,
+				PDCPBytesUL:            100000,
+				MeasTimestampAvailPRB:  "2020-03-18 02:23:18.220",
+				MeasPeriodAvailPRB:     20,
+				AvailPRBDL:             30,
+				AvailPRBUL:             45,
+				MeasTimestampRF:        "2020-03-18 02:23:18.220",
+				MeasPeriodRF:           40,
+				RFMeasurements:         data.RFMeasurement{RSRP: -115, RSRQ: -16, RSSINR: -5},
+			}]
+	}
 
 
 Expected Output
