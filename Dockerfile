@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 #==================================================================================
-FROM nexus3.o-ran-sc.org:10002/o-ran-sc/bldr-ubuntu20-c-go:1.1.0 as builder
+FROM nexus3.o-ran-sc.org:10002/o-ran-sc/bldr-ubuntu20-c-go:1.1.0 as qpaimlfwcore
 
 RUN wget --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr_4.7.0_amd64.deb/download.deb && dpkg -i rmr_4.7.0_amd64.deb && rm -rf rmr_4.7.0_amd64.deb
 RUN wget --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr-dev_4.7.0_amd64.deb/download.deb && dpkg -i rmr-dev_4.7.0_amd64.deb && rm -rf rmr-dev_4.7.0_amd64.deb
@@ -43,7 +43,7 @@ RUN sed -r "s/^(::1.*)/#\1/" /etc/hosts > /etc/hosts.new \
     && go test -v ./influx ./control -test.coverprofile /tmp/qp_cover.out \
     && go tool cover -html=/tmp/qp_cover.out -o /tmp/qp_cover.html
 
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as qpaimlfwbuild
 
 ENV CFG_FILE=config/config-file.json
 ENV RMR_SEED_RT=config/uta_rtg.rt
@@ -56,10 +56,10 @@ RUN apt update && apt install -y \
     sudo \ 
     ca-certificates 
 
-COPY --from=builder /opt/qoe-aiml-assist/build/qoe-aiml-assist .
-COPY --from=builder /usr/local/include /usr/local/include
-COPY --from=builder /usr/local/lib /usr/local/lib
-COPY --from=builder /opt/qoe-aiml-assist/config/* /opt/ric/config/
-COPY --from=builder /tmp/qp_cover.* /tmp/
+COPY --from=qpaimlfwcore /opt/qoe-aiml-assist/build/qoe-aiml-assist .
+COPY --from=qpaimlfwcore /usr/local/include /usr/local/include
+COPY --from=qpaimlfwcore /usr/local/lib /usr/local/lib
+COPY --from=qpaimlfwcore /opt/qoe-aiml-assist/config/* /opt/ric/config/
+COPY --from=qpaimlfwcore /tmp/qp_cover.* /tmp/
 
 RUN ldconfig
