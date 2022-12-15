@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 #==================================================================================
-FROM nexus3.o-ran-sc.org:10002/o-ran-sc/bldr-ubuntu20-c-go:1.1.0 as builder
+FROM nexus3.o-ran-sc.org:10002/o-ran-sc/bldr-ubuntu20-c-go:1.1.0 as qpaimlfwbuild
 
 RUN wget --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr_4.7.0_amd64.deb/download.deb && dpkg -i rmr_4.7.0_amd64.deb && rm -rf rmr_4.7.0_amd64.deb
 RUN wget --content-disposition https://packagecloud.io/o-ran-sc/release/packages/debian/stretch/rmr-dev_4.7.0_amd64.deb/download.deb && dpkg -i rmr-dev_4.7.0_amd64.deb && rm -rf rmr-dev_4.7.0_amd64.deb
@@ -56,10 +56,10 @@ RUN apt update && apt install -y \
     sudo \ 
     ca-certificates 
 
-COPY --from=builder /opt/qoe-aiml-assist/build/qoe-aiml-assist .
-COPY --from=builder /usr/local/include /usr/local/include
-COPY --from=builder /usr/local/lib /usr/local/lib
-COPY --from=builder /opt/qoe-aiml-assist/config/* /opt/ric/config/
-COPY --from=builder /tmp/qp_cover.* /tmp/
+COPY --from=qpaimlfwbuild /opt/qoe-aiml-assist/build/qoe-aiml-assist .
+COPY --from=qpaimlfwbuild /usr/local/include /usr/local/include
+COPY --from=qpaimlfwbuild /usr/local/lib /usr/local/lib
+COPY --from=qpaimlfwbuild /opt/qoe-aiml-assist/config/* /opt/ric/config/
+COPY --from=qpaimlfwbuild /tmp/qp_cover.* /tmp/
 
 RUN ldconfig
